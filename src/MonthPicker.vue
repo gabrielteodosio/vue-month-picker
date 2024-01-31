@@ -26,6 +26,7 @@
                 :class="{
                     inactive: isInactive(month),
                     clearable: clearable,
+                    'in-between-selected-range': isInBetweenRangeSelection(monthIndex),
                     selected:
                         (highlightExactDate &&
                             !range &&
@@ -38,7 +39,11 @@
                         (!highlightExactDate &&
                             !range &&
                             currentMonthIndex === monthIndex) ||
-                        (range && isInSelectedRange(monthIndex)),
+                        (range && isInSelectedRange(monthIndex)) ||
+                        (range && (
+                            [firstRangeMonthIndex, secondRangeMonthIndex].includes(monthIndex)
+                          )
+                        ),
                 }"
                 class="month-picker__month"
                 @click="selectMonth(monthIndex, true)"
@@ -186,6 +191,18 @@ export default {
             if (input) {
                 this.$emit('input', this.date)
             }
+        },
+        isInBetweenRangeSelection(index) {
+          if (this.range) {
+            if (this.firstRangeMonthIndex != null && this.secondRangeMonthIndex != null) {
+              const lowestMonthIndex = Math.min(this.firstRangeMonthIndex, this.secondRangeMonthIndex)
+              const highestMonthIndex = Math.max(this.firstRangeMonthIndex, this.secondRangeMonthIndex)
+              
+              return index > lowestMonthIndex && index < highestMonthIndex;
+            }
+          }
+
+          return false
         },
 
         selectMonthRange(index, input) {
