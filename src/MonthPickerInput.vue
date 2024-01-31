@@ -15,6 +15,7 @@
             :lang="lang"
             :months="months"
             :no-default="noDefault"
+            :default-month-range="defaultMonthRange"
             :show-year="showYear"
             :highlight-exact-date="highlightExactDate"
             :clearable="clearable"
@@ -71,6 +72,23 @@ export default {
             type: String,
             default: null,
         },
+        defaultMonthRange: {
+            type: Array,
+            default: null,
+            required: false,
+            validator: function (value) {
+                if (value === null || value.length !== 2) {
+                    return false
+                }
+
+                const [firstRange, secondRange] = value
+                if (secondRange <= firstRange) {
+                    return false
+                }
+
+                return true
+            },
+        },
     },
     emits: ['change', 'input'],
     data() {
@@ -96,6 +114,24 @@ export default {
                 this.selectedDate = this.dateFormat
                     .replace('%n', this.monthsByLang[value - 1])
                     .replace('%Y', this.defaultYear)
+            },
+        },
+        defaultMonthRange: {
+            immediate: true,
+            handler(value) {
+                if (!value || !this.inputPreFilled) return
+
+                if (
+                  this.range &&
+                  Array.isArray(value) && value.length === 2 &&
+                  (value[0] >= 0 && value[0] <= this.monthsByLang.length) &&
+                  (value[1] >= 0 && value[1] <= this.monthsByLang.length)
+                ) {
+                  const formattedDateFrom = `${this.monthsByLang[value[0]]}/${this.defaultYear}`
+                  const formattedDateTo = `${this.monthsByLang[value[1]]}/${this.defaultYear}`
+
+                  this.selectedDate = `${formattedDateFrom} ~ ${formattedDateTo}`
+                }
             },
         },
     },
@@ -128,7 +164,10 @@ export default {
         },
         updateDate(date) {
             if (this.range) {
-                this.selectedDate = `${date.rangeFromMonth} - ${date.rangeToMonth}, ${date.year}`
+                const formattedDateFrom = `${date.rangeFromMonth}/${date.rangeFromYear}`
+                const formattedDateTo = `${date.rangeToMonth}/${date.rangeToYear}`
+
+                this.selectedDate = `${formattedDateFrom} ~ ${formattedDateTo}`
             } else {
                 this.selectedDate = this.dateFormat
                     .replace('%n', date.month)
